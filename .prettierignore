@@ -1,0 +1,12 @@
+/.vscode
+/node_modules
+./dist
+
+*.env
+.env
+.env.*
+
+
+<!-- Beginners often mix styles (sometimes " vs ', sometimes 2 spaces vs 4 spaces).
+
+Prettier enforces one style everywhere → cleaner, professional‑looking code. -->
