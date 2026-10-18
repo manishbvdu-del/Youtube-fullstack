@@ -1,6 +1,7 @@
 
 import dotenv from "dotenv"
 import connectDB from "./db/index.js";
+import { app } from "./app.js"
 
 // Configure dotenv to read variables from the './env' file.
 // By default, dotenv looks for a '.env' file in the root, but here we specify a custom path.
