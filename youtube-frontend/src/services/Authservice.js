@@ -54,6 +54,18 @@ const AuthService = {
     updateCoverImage: async (formData) => {
         const response = await api.patch("/users/cover-image", formData);
         return response.data;
+    },
+
+    // Get user channel profile
+    getUserChannelProfile: async (username) => {
+        const response = await api.get(`/users/c/${encodeURIComponent(username)}`);
+        return response.data;
+    },
+
+    // Get watch history
+    getWatchHistory: async () => {
+        const response = await api.get("/users/history");
+        return response.data;
     }
 };
 
