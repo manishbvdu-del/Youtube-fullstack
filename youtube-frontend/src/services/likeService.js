@@ -22,33 +22,22 @@ const LikeService = {
 
     // Get video like count and current user's like status
     getVideoLikeCount: async (videoId) => {
-        const response = await api.get(`/likes/v/${videoId}`);
+        const response = await api.get(`/likes/video/${videoId}`);
         return response.data;
     },
 
     // Get comment like count and current user's like status
     getCommentLikeCount: async (commentId) => {
-        const response = await api.get(`/likes/c/${commentId}`);
+        const response = await api.get(`/likes/comment/${commentId}`);
         return response.data;
     },
 
     // Get tweet like count and current user's like status
     getTweetLikeCount: async (tweetId) => {
-        const response = await api.get(`/likes/t/${tweetId}`);
+        const response = await api.get(`/likes/tweet/${tweetId}`);
         return response.data;
     },
 
-    // Get videos liked by the current user
-    getLikedVideos: async () => {
-        const response = await api.get("/likes/videos");
-        return response.data;
-    },
-
-    // Get comments liked by the current user
-    getLikedComments: async () => {
-        const response = await api.get("/likes/comments");
-        return response.data;
-    }
 };
 
 export default LikeService;
