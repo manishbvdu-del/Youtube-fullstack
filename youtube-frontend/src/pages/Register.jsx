@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { registerUser } from "../services/userService";
+import AuthService from "../services/Authservice";
 
 function Register() {
     const navigate = useNavigate();
@@ -47,8 +47,8 @@ function Register() {
             );
         }
 
-        const result = await registerUser(formData);
-
+       const result = await AuthService.register(formData);
+       
         console.log("Registration response:", result);
         toast.success("Registration successful!");
         navigate("/login");

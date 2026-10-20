@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { loginUser } from "../services/userService";
+import AuthService from "../services/Authservice";
 
 function Login() {
     const navigate = useNavigate();
@@ -23,7 +23,7 @@ function Login() {
                 password
             };
 
-            await loginUser(credentials);
+         await AuthService.login(credentials);
 
             toast.success("Login successful!");
             navigate("/");
