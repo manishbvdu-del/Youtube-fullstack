@@ -37,16 +37,6 @@ function Register() {
             formData.append("coverImage", coverImage);
         }
 
-        console.log("Selected avatar:", avatar);
-        console.log("Avatar field:", formData.get("avatar"));
-
-        for (const [key, value] of formData.entries()) {
-            console.log(
-                key,
-                value instanceof File ? value.name : value
-            );
-        }
-
        const result = await AuthService.register(formData);
        
         console.log("Registration response:", result);
