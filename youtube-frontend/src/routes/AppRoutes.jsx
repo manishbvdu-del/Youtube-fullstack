@@ -1,5 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import Search from "./pages/Search";
+
+// Other existing imports: Home, Login, Register, etc.
 
 <Routes>
   {/* Public routes */}
@@ -16,6 +19,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
     <Route path="/liked-videos" element={<LikedVideos />} />
     <Route path="/playlists" element={<Playlist />} />
     <Route path="/subscriptions" element={<Subscriptions />} />
+    <Route path="/search" element={<Search />} />
   </Route>
 
   <Route path="*" element={<NotFound />} />
