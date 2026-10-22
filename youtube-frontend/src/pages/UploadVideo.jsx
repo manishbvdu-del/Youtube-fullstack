@@ -77,10 +77,7 @@ const UploadVideo = () => {
       formData.append("videoFile", videoFile);
       formData.append("thumbnail", thumbnail);
 
-      const response = await api.post(
-        "/videos/upload",
-        formData
-      );
+      const response = await api.post("/videos/upload", formData);
 
       setSuccess(
         response.data.message || "Video uploaded successfully!"
@@ -99,10 +96,8 @@ const UploadVideo = () => {
         navigate("/");
       }, 1500);
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        "Video upload failed. Please try again."
-      );
+      setError( err.response?.data?.message || "Video upload failed. Please try again.");
+    
     } finally {
       setLoading(false);
     }
