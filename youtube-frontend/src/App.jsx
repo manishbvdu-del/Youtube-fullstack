@@ -2,12 +2,14 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { AuthProvider } from "./context/AuthContext";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 
 import Home from "./pages/Home";
 import WatchVideo from "./pages/WatchVideo";
+import PlaylistDetails from "./pages/PlaylistDetails";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -17,6 +19,8 @@ import LikedComments from "./pages/LikedComments";
 import Playlist from "./pages/Playlist";
 import Subscription from "./pages/Subscriptions";
 import Channel from "./pages/Channel";
+import UploadVideo from "./pages/UploadVideo";
+import CreatePlaylist from "./pages/CreatePlaylist";
 import NotFound from "./pages/NotFound";
 
 function Layout() {
@@ -37,26 +41,16 @@ function Layout() {
             >
                 <div className="p-4 md:p-6">
                     <Routes>
-                        {/* Home and video */}
                         <Route path="/" element={<Home />} />
                         <Route
                             path="/watch/:videoId"
                             element={<WatchVideo />}
                         />
 
-                        {/* User dashboard */}
-                        <Route
-                            path="/dashboard"
-                            element={<Dashboard />}
-                        />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/upload" element={<UploadVideo />} />
+                        <Route path="/history" element={<History />} />
 
-                        {/* Watch history */}
-                        <Route
-                            path="/history"
-                            element={<History />}
-                        />
-
-                        {/* Liked content */}
                         <Route
                             path="/liked-videos"
                             element={<LikedVideos />}
@@ -66,23 +60,18 @@ function Layout() {
                             element={<LikedComments />}
                         />
 
-                        {/* Playlists */}
-                        <Route
-                            path="/playlists"
-                            element={<Playlist />}
-                        />
-
-                        {/* Subscriptions */}
+                        <Route path="/playlists" element={<Playlist />} />
                         <Route
                             path="/subscriptions"
                             element={<Subscription />}
                         />
                         <Route
-                        path="/channel"
-                        element={<Channel/>}
+                            path="/channel/:username"
+                            element={<Channel />}
                         />
+                        <Route path="/create-playlist" element={<CreatePlaylist />} />
+                        <Route path="/playlist/:playlistId" element={<PlaylistDetails />} />
 
-                        {/* 404 */}
                         <Route path="*" element={<NotFound />} />
                     </Routes>
                 </div>
@@ -94,25 +83,24 @@ function Layout() {
 function App() {
     return (
         <BrowserRouter>
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    duration: 3000,
-                    style: {
-                        background: "#272727",
-                        color: "#ffffff",
-                    },
-                }}
-            />
+            <AuthProvider>
+                <Toaster
+                    position="top-right"
+                    toastOptions={{
+                        duration: 3000,
+                        style: {
+                            background: "#272727",
+                            color: "#ffffff",
+                        },
+                    }}
+                />
 
-            <Routes>
-                {/* Authentication pages without sidebar */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-
-                {/* Main application layout */}
-                <Route path="/*" element={<Layout />} />
-            </Routes>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/*" element={<Layout />} />
+                </Routes>
+            </AuthProvider>
         </BrowserRouter>
     );
 }

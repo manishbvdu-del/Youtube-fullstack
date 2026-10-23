@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 const UploadVideo = () => {
   const navigate = useNavigate();
 
+  const [duration, setDuration] = useState(0);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [videoFile, setVideoFile] = useState(null);
@@ -26,9 +27,41 @@ const UploadVideo = () => {
       return;
     }
 
-    setVideoFile(file);
-    setVideoPreview(URL.createObjectURL(file));
     setError("");
+    setDuration(0);
+    setVideoFile(file);
+
+    if (videoPreview) {
+      URL.revokeObjectURL(videoPreview);
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setVideoPreview(previewUrl);
+
+    const video = document.createElement("video");
+    video.preload = "metadata";
+
+    video.onloadedmetadata = () => {
+      const videoDuration = video.duration;
+
+      URL.revokeObjectURL(video.src);
+
+      if (!Number.isFinite(videoDuration) || videoDuration <= 0) {
+        setDuration(0);
+        setError("Unable to read video duration. Please select another video.");
+        return;
+      }
+
+      setDuration(videoDuration);
+    };
+
+    video.onerror = () => {
+      URL.revokeObjectURL(video.src);
+      setDuration(0);
+      setError("Unable to read video metadata. Please select another video.");
+    };
+
+    video.src = URL.createObjectURL(file);
   };
 
   const handleThumbnailChange = (e) => {
@@ -41,9 +74,14 @@ const UploadVideo = () => {
       return;
     }
 
-    setThumbnail(file);
-    setThumbnailPreview(URL.createObjectURL(file));
     setError("");
+    setThumbnail(file);
+
+    if (thumbnailPreview) {
+      URL.revokeObjectURL(thumbnailPreview);
+    }
+
+    setThumbnailPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
@@ -57,6 +95,11 @@ const UploadVideo = () => {
       return;
     }
 
+    if (!description.trim()) {
+      setError("Please enter a video description.");
+      return;
+    }
+
     if (!videoFile) {
       setError("Please select a video file.");
       return;
@@ -67,6 +110,11 @@ const UploadVideo = () => {
       return;
     }
 
+    if (!duration || duration <= 0) {
+      setError("Please wait for the video duration to load.");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -74,6 +122,7 @@ const UploadVideo = () => {
 
       formData.append("title", title.trim());
       formData.append("description", description.trim());
+      formData.append("duration", String(duration));
       formData.append("videoFile", videoFile);
       formData.append("thumbnail", thumbnail);
 
@@ -85,8 +134,18 @@ const UploadVideo = () => {
 
       setTitle("");
       setDescription("");
+      setDuration(0);
       setVideoFile(null);
       setThumbnail(null);
+
+      if (videoPreview) {
+        URL.revokeObjectURL(videoPreview);
+      }
+
+      if (thumbnailPreview) {
+        URL.revokeObjectURL(thumbnailPreview);
+      }
+
       setVideoPreview("");
       setThumbnailPreview("");
 
@@ -96,8 +155,18 @@ const UploadVideo = () => {
         navigate("/");
       }, 1500);
     } catch (err) {
-      setError( err.response?.data?.message || "Video upload failed. Please try again.");
-    
+      console.error("Video upload failed:", err.response?.data || err);
+      console.error("Status:", err.response?.status);
+
+      const responseData = err.response?.data;
+
+      setError(
+        typeof responseData === "string"
+          ? responseData.replace(/<[^>]*>/g, " ").trim()
+          : responseData?.message ||
+            responseData?.error ||
+            "Video upload failed. Check the backend terminal."
+      );
     } finally {
       setLoading(false);
     }
@@ -140,12 +209,21 @@ const UploadVideo = () => {
               type="file"
               accept="video/*"
               onChange={handleVideoChange}
+              required
+              disabled={loading}
               className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-white file:text-black file:font-semibold hover:file:bg-gray-200"
             />
 
             {videoFile && (
               <p className="text-sm text-gray-400 mt-2">
                 Selected: {videoFile.name}
+              </p>
+            )}
+
+            {duration > 0 && (
+              <p className="text-sm text-green-400 mt-2">
+                Duration: {Math.floor(duration / 60)}:
+                {String(Math.floor(duration % 60)).padStart(2, "0")}
               </p>
             )}
 
@@ -168,6 +246,8 @@ const UploadVideo = () => {
               type="file"
               accept="image/*"
               onChange={handleThumbnailChange}
+              required
+              disabled={loading}
               className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-white file:text-black file:font-semibold hover:file:bg-gray-200"
             />
 
@@ -203,6 +283,7 @@ const UploadVideo = () => {
               placeholder="Enter your video title"
               maxLength={150}
               required
+              disabled={loading}
               className="w-full bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-white"
             />
           </div>
@@ -213,7 +294,7 @@ const UploadVideo = () => {
               htmlFor="description"
               className="block font-semibold mb-2"
             >
-              Description
+              Description *
             </label>
 
             <textarea
@@ -222,6 +303,8 @@ const UploadVideo = () => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your video..."
               rows={5}
+              required
+              disabled={loading}
               className="w-full bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-white resize-y"
             />
           </div>

@@ -58,7 +58,7 @@ const getPlaylistById = asyncHandler(async(req,res) => {
     const {playlistId} = req.params
 
     const playlist = await Playlist.findById(playlistId)
-        .populate("videos","title thumbnail duration")
+        .populate("videos","title thumbnail duration views createdAt isPublished")
         .populate("owner","username fullname avatar")
 
     if(!playlist){

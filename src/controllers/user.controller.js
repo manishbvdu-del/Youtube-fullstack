@@ -174,10 +174,13 @@ console.log("Password received:", Boolean(password));
     const loggedInUser = await User.findById(user._id)
         .select("-password -refreshToken");
 
-    const options = {
-        httpOnly: true,
-        secure: true
-    };
+    
+const options = {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax"
+};
+
 
     return res
         .status(200)
@@ -212,9 +215,10 @@ const logoutUser = asyncHandler(async (req, res) => {
     );
 
     const options = {
-        httpOnly: true,
-        secure: true
-    };
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax"
+};
 
     return res
         .status(200)
@@ -249,10 +253,11 @@ const refreshAccessToken = asyncHandler(async(req,res) =>{
             throw new ApiError(401,"Refresh token is expired or used")
         }
 
-        const options = {
-            httpOnly:true,
-            secure:true
-        }
+       const options = {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax"
+};
 
         const {accessToken,refreshToken} =  await generateAccessAndRefreshTokens(user._id)
         return res.status(200)
@@ -351,67 +356,68 @@ const updateUserCoverImage = asyncHandler(async(req,res) =>{
     return res.status(200).json(new ApiResponse(200,user,"Cover image updated sucessfully"))
 })
 
-const getUserChannelProfile = asyncHandler(async(req,res) =>{
-    const {username} = req.params
 
-    if(!username?.trim()){
-        throw new ApiError(400,"username is missing")
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+    const { username } = req.params;
+
+    if (!username?.trim()) {
+        throw new ApiError(400, "Username is missing");
     }
 
     const channel = await User.aggregate([
         {
-            $match:{
-                username:username.toLowerCase()
+            $match: {
+                username: username.trim().toLowerCase()
             }
         },
         {
-            $lookup:{
-                from:"subscriptions",
-                localField:"_id",
-                foreignField:"channel",
-                as:"subscribers"
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
             }
         },
         {
-            $lookup:{
-                from:"subscriptions",
-                localField:"_id",
-                foreignField:"subscriber",
-                as:"subscribedTo"
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
             }
         },
         {
-            $addFields:{
-                subscriberCount:{
-                    $size:"$subscribers"
+            $addFields: {
+                subscriberCount: {
+                    $size: "$subscribers"
                 },
-                channelsSubscribedToCount:{
-                    $size:"$subscribedTo"
+                channelsSubscribedToCount: {
+                    $size: "$subscribedTo"
                 },
-                isSubscribed:{
-                    $cond:{
-                        if:{$in:[req.user?._id,"$subscribers.subscriber"]},
-                        then:true,
-                        else:false
-                    }
+                isSubscribed: {
+                    $in: [
+                        req.user._id,
+                        "$subscribers.subscriber"
+                    ]
                 }
             }
         },
         {
-            $project:{
-                fullname:1,
-                username:1,
-                subscriberCount:1,
-                channelsSubscribedToCount:1,
-                isSubscribed:1,
-                avatar:1,
-                coverImage:1
+            $project: {
+                _id: 1,
+                fullname: 1,
+                username: 1,
+                subscriberCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1
             }
         }
-    ])
+    ]);
 
-    if(!channel?.length){
-        throw new ApiError(404,"channel does not exist")
+    if (!channel.length) {
+        throw new ApiError(404, "Channel does not exist");
     }
 
     return res.status(200).json(
@@ -420,8 +426,9 @@ const getUserChannelProfile = asyncHandler(async(req,res) =>{
             channel[0],
             "User channel profile fetched successfully"
         )
-    )
-})
+    );
+});
+
 
 
 const getWatchHistory = asyncHandler(async(req,res) =>{

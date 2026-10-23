@@ -11,30 +11,39 @@ const Playlist = () => {
     const [error, setError] = useState("");
     const [deletingId, setDeletingId] = useState(null);
 
-    const fetchPlaylists = async () => {
-        try {
-            setLoading(true);
-            setError("");
+   const fetchPlaylists = async () => {
+    try {
+        setLoading(true);
+        setError("");
 
-            const userResponse = await api.get("/users/current-user");
-            const user = userResponse.data.data;
+        const userResponse = await api.get("/users/current-user");
+        const user = userResponse.data.data;
 
-            const response = await api.get(
-                `/playlists/user/${user._id}`
-            );
+        console.log("Current user:", user);
+        console.log("User ID:", user?._id);
 
-            const data = response.data.data;
-            setPlaylists(Array.isArray(data) ? data : data?.playlists || []);
-        } catch (err) {
-            setError(
-                err.response?.data?.message ||
-                "Unable to load playlists. Please try again."
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
+        const url = `/playlists/user/${user._id}`;
+        console.log("Fetching playlists from:", url);
 
+        const response = await api.get(url);
+
+        console.log("Playlist response:", response.data);
+
+        const data = response.data.data;
+        setPlaylists(Array.isArray(data) ? data : data?.playlists || []);
+    } catch (err) {
+        console.error("Playlist error:", err.response?.status);
+        console.error("Playlist error response:", err.response?.data);
+        console.error("Failed URL:", err.config?.url);
+
+        setError(
+            err.response?.data?.message ||
+            "Unable to load playlists. Please try again."
+        );
+    } finally {
+        setLoading(false);
+    }
+};
     useEffect(() => {
         fetchPlaylists();
     }, []);
@@ -147,7 +156,6 @@ const Playlist = () => {
 
                                 <p className="text-gray-400 text-sm mt-2 line-clamp-2">
                                     {playlist.description ||
-                                        playlist.desscription ||
                                         "No description available"}
                                 </p>
 

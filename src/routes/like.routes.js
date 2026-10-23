@@ -1,11 +1,13 @@
+
 import { Router } from "express";
 import { getCommentLikeCount,
      getTweetLikeCount, 
      getVideoLikeCount, 
+     
      toggleCommentLike,
       toggleTweetLike, 
       toggleVideoLike } from "../controllers/like.controller.js"
- import {verifyJWT} from "../middlewares/auth.middleware.js";
+import {verifyJWT} from "../middlewares/auth.middleware.js";
 
 const router = Router()
 router.use(verifyJWT)
@@ -17,5 +19,5 @@ router.route("/video/:videoId").get(getVideoLikeCount)
 router.route("/comment/:commentId").get(getCommentLikeCount)
 router.route("/tweet/:tweetId").get(getTweetLikeCount)
 
-export default router
 
+export default router
