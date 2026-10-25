@@ -17,70 +17,144 @@ const UploadVideo = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleVideoChange = (e) => {
+ // This function runs when the user selects a video file
+const handleVideoChange = (e) => {
+
+    // Get the first file selected by the user
+    // e.target represents the file input
+    // files contains the selected files
+    // ?. prevents an error if files is null or undefined
     const file = e.target.files?.[0];
 
+    // If no file is selected, stop the function
     if (!file) return;
 
+    // Check whether the selected file is a video
+    // startsWith("video/") checks the file's MIME type
     if (!file.type.startsWith("video/")) {
+
+      // Display an error message if the file is not a video
       setError("Please select a valid video file.");
+
+      // Stop processing the invalid file
       return;
     }
 
+    // Clear any previous error message
     setError("");
+
+    // Reset the previous video's duration to zero
     setDuration(0);
+
+    // Store the selected File object in React state
+    // This file will be used when uploading to the backend
     setVideoFile(file);
 
+    // Check whether a previous video preview URL exists
     if (videoPreview) {
+
+      // Release the previous preview URL because it is no longer needed
+      // This helps avoid keeping unnecessary object URLs around
       URL.revokeObjectURL(videoPreview);
     }
 
+    // Create a temporary URL for previewing the selected video
+    // This does not upload the video to the server
     const previewUrl = URL.createObjectURL(file);
+
+    // Store the preview URL in React state
+    // The UI can use it as the source of a <video> element
     setVideoPreview(previewUrl);
 
+    // Create a temporary HTML video element using JavaScript
+    // It is used to read the video's metadata
     const video = document.createElement("video");
+
+    // Ask the browser to preload video metadata
+    // Metadata includes information such as duration and dimensions
     video.preload = "metadata";
 
+    // This function runs when the video's metadata has loaded
     video.onloadedmetadata = () => {
+
+      // Read the video's duration in seconds
       const videoDuration = video.duration;
 
+      // Release the temporary URL used for reading metadata
+      // This is separate from the previewUrl
       URL.revokeObjectURL(video.src);
 
+      // Check whether the duration is invalid
+      // Number.isFinite() rejects NaN and Infinity
+      // Duration must also be greater than zero
       if (!Number.isFinite(videoDuration) || videoDuration <= 0) {
+
+        // Reset the duration because it is invalid
         setDuration(0);
+
+        // Display an error message to the user
         setError("Unable to read video duration. Please select another video.");
+
+        // Stop this metadata handler
         return;
       }
 
+      // Store the valid duration in React state
+      // Example: 625 seconds means 10 minutes and 25 seconds
       setDuration(videoDuration);
     };
 
+    // This function runs if the browser encounters a media error
     video.onerror = () => {
+
+      // Release the temporary metadata URL
       URL.revokeObjectURL(video.src);
+
+      // Reset the duration because metadata could not be read
       setDuration(0);
+
+      // Tell the user that the video's metadata could not be read
       setError("Unable to read video metadata. Please select another video.");
     };
 
+    // Create another temporary URL and assign it to the video element
+    // This starts loading the video metadata
+    // The event handlers above are registered before loading begins
     video.src = URL.createObjectURL(file);
-  };
-
-  const handleThumbnailChange = (e) => {
+};
+const handleThumbnailChange = (e) => {
+    // Get the first selected file from the input element.
     const file = e.target.files?.[0];
 
+    // If no file is selected, stop the function.
     if (!file) return;
 
+    // Check whether the selected file is an image.
+    // Examples: image/png, image/jpeg, image/webp.
     if (!file.type.startsWith("image/")) {
+      // Display an error if the selected file is not an image.
       setError("Please select a valid thumbnail image.");
+
+      // Stop the function so the invalid file is not saved.
       return;
     }
 
+    // Clear any previous error message.
     setError("");
+
+    // Store the selected image file in React state.
+    // This file can later be sent to the backend for uploading.
     setThumbnail(file);
 
+    // Check whether an old thumbnail preview URL exists.
     if (thumbnailPreview) {
+      // Release the old preview URL from memory
+      // because it is no longer needed.
       URL.revokeObjectURL(thumbnailPreview);
     }
 
+    // Create a temporary URL for the selected image
+    // and store it in state to display the preview.
     setThumbnailPreview(URL.createObjectURL(file));
   };
 

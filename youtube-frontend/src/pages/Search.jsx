@@ -5,9 +5,13 @@ import api from "../services/api";
 import VideoCard from "../components/video/VideoCard";
 
 const Search = () => {
-    const [searchParams] = useSearchParams();
+   
+ // Get the query parameters from the current URL
+const [searchParams] = useSearchParams();
 
-    const query = searchParams.get("search")?.trim() || "";
+// Get the "search" value from the URL, remove extra spaces,
+// and use an empty string if the value is missing
+const query = searchParams.get("search")?.trim() || "";
 
     const [videos, setVideos] = useState([]);
     const [loading, setLoading] = useState(false);

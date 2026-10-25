@@ -22,68 +22,115 @@ function WatchVideo() {
     const [playlistsLoading, setPlaylistsLoading] = useState(false);
     const [addingPlaylistId, setAddingPlaylistId] = useState(null);
 
-    useEffect(() => {
-        let cancelled = false;
+  
+useEffect(() => {
+    // cancelled false ka matlab: abhi request cancel nahi hui hai
+    let cancelled = false;
 
-        const fetchVideo = async () => {
-            try {
-                setLoading(true);
-                setError("");
-                setVideo(null);
+    // Video ki details backend se fetch karne ke liye async function
+    const fetchVideo = async () => {
+        try {
+            // Loading start karo, taaki user ko loading indicator dikhe
+            setLoading(true);
 
-                const response = await api.get(`/videos/${videoId}`);
-                const result = response.data?.data;
-                const videoData = result?.video || result;
+            // Purana error message clear karo
+            setError("");
 
-                if (!videoData?._id) {
-                    throw new Error("Video details were not found.");
-                }
+            // Purani video details clear karo
+            setVideo(null);
 
-                if (cancelled) return;
+            // Backend API se video ki details fetch karo
+            const response = await api.get(`/videos/${videoId}`);
 
-                setVideo(videoData);
+            // response.data ke andar se data nikalo
+            // ?. ka matlab: agar response.data nahi hai, toh error mat do
+            const result = response.data?.data;
 
-                const owner = videoData.owner || {};
+            // Agar result.video available hai, toh use lo
+            // Warna poore result ko video data maan lo
+            const videoData = result?.video || result;
 
-                setIsSubscribed(
-                    videoData.isSubscribed ??
-                    owner.isSubscribed ??
-                    false
-                );
-
-                setSubscriberCount(
-                    videoData.subscriberCount ??
-                    owner.subscriberCount ??
-                    0
-                );
-            } catch (err) {
-                if (!cancelled) {
-                    console.error(
-                        "Failed to fetch video:",
-                        err.response?.data || err.message
-                    );
-
-                    setError(
-                        err.response?.data?.message ||
-                        err.message ||
-                        "Unable to load this video."
-                    );
-                }
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
+            // Agar video ki ID nahi mili, toh error throw karo
+            // ! ka matlab: value nahi hai
+            if (!videoData?._id) {
+                throw new Error("Video details were not found.");
             }
-        };
 
-        if (videoId) {
-            fetchVideo();
+            // Agar effect cleanup ho chuka hai, toh aage ka code mat chalao
+            // Isse purani request nayi video ka data overwrite nahi karegi
+            if (cancelled) return;
+
+            // Fetch hui video ki details state mein save karo
+            setVideo(videoData);
+
+            // Video owner ki details nikalo
+            // Owner nahi mila toh empty object {} use karo
+            const owner = videoData.owner || {};
+
+            // Subscription status set karo
+            // ?? ka matlab: left value null ya undefined ho tabhi right value lo
+            // Pehle videoData.isSubscribed check hoga
+            // Phir owner.isSubscribed
+            // Dono na milein toh false
+            setIsSubscribed(
+                videoData.isSubscribed ??
+                owner.isSubscribed ??
+                false
+            );
+
+            // Channel ke subscribers ki count set karo
+            // Pehle videoData ki count, phir owner ki count
+            // Dono na milein toh 0
+            setSubscriberCount(
+                videoData.subscriberCount ??
+                owner.subscriberCount ??
+                0
+            );
+
+        } catch (err) {
+            // Sirf tab error handle karo jab request cancel nahi hui ho
+            if (!cancelled) {
+
+                // Console mein error details print karo
+                // Backend ka error data mile toh use karo, warna error message
+                console.error(
+                    "Failed to fetch video:",
+                    err.response?.data || err.message
+                );
+
+                // User ko dikhane ke liye error message set karo
+                // Pehle backend message, phir normal error message
+                // Dono na milein toh default message
+                setError(
+                    err.response?.data?.message ||
+                    err.message ||
+                    "Unable to load this video."
+                );
+            }
+
+        } finally {
+            // Request complete hone ke baad loading band karo
+            // Cancelled effect mein state update mat karo
+            if (!cancelled) {
+                setLoading(false);
+            }
         }
+    };
 
-        return () => {
-            cancelled = true;
-        };
-    }, [videoId]);
+    // Agar videoId available hai, tabhi video fetch karo
+    if (videoId) {
+        fetchVideo();
+    }
+
+    // Cleanup function: effect band ya dobara run hone par chalega
+    return () => {
+        // Purane effect ko mark karo taaki uska result state update na kare
+        cancelled = true;
+    };
+
+// videoId change hone par useEffect dobara chalega
+}, [videoId]);
+
 
     const handleSubscribe = async () => {
         if (!user) {
@@ -279,26 +326,52 @@ function WatchVideo() {
         <div className="min-h-screen bg-[#0f0f0f] text-white">
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="min-w-0 xl:col-span-2">
-                    <div className="aspect-video overflow-hidden rounded-xl bg-black">
-                        {videoUrl ? (
-                            <video
-                                key={videoUrl}
-                                controls
-                                autoPlay
-                                playsInline
-                                preload="metadata"
-                                poster={thumbnailUrl || undefined}
-                                className="h-full w-full"
-                            >
-                                <source src={videoUrl} />
-                                Your browser does not support video playback.
-                            </video>
-                        ) : (
-                            <div className="flex h-full items-center justify-center text-neutral-400">
-                                Video file URL is missing.
-                            </div>
-                        )}
-                    </div>
+                   {/* Create a video container with a 16:9 aspect ratio, hidden overflow,
+    rounded corners, and a black background. */}
+<div className="aspect-video overflow-hidden rounded-xl bg-black">
+
+    {/* Check whether a video URL exists. */}
+    {videoUrl ? (
+
+        // If videoUrl exists, display the video player.
+        <video
+            // Re-create the video element when videoUrl changes.
+            key={videoUrl}
+
+            // Display play, pause, volume, and other video controls.
+            controls
+
+            // Automatically start playing the video when possible.
+            autoPlay
+
+            // Allow inline playback on supported mobile browsers.
+            playsInline
+
+            // Load video metadata first, such as duration and dimensions.
+            preload="metadata"
+
+            // Display the thumbnail image before the video plays.
+            // If thumbnailUrl is empty, pass undefined instead.
+            poster={thumbnailUrl || undefined}
+
+            // Make the video fill the width and height of its container.
+            className="h-full w-full"
+        >
+            {/* Specify the URL from which the video should be loaded. */}
+            <source src={videoUrl} />
+
+            {/* Fallback text for browsers that cannot play video. */}
+            Your browser does not support video playback.
+        </video>
+
+    ) : (
+
+        // If videoUrl is missing, display an error message instead.
+        <div className="flex h-full items-center justify-center text-neutral-400">
+            Video file URL is missing.
+        </div>
+    )}
+</div>
 
                     <h1 className="mt-4 text-xl font-bold md:text-2xl">
                         {video.title || "Untitled video"}
@@ -526,3 +599,5 @@ function WatchVideo() {
 }
 
 export default WatchVideo;
+
+

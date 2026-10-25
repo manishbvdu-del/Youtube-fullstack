@@ -70,3 +70,7 @@ const fetchCurrentUser = useCallback(async () => {
         </AuthContext.Provider>
     );
 };
+
+// AppRoutes is passed to AuthProvider as children.
+// Your provider can then make the authentication context available to the components inside it.
+// In your VidTube project, you wrap your app in AuthProvider so pages and components can share authentication state.
