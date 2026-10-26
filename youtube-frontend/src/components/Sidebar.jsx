@@ -1,13 +1,7 @@
 
 import {
-    Home,
-    History,
-    ListVideo,
-    UserRound,
-    Clapperboard,
-    MessageCircle,
-    LayoutDashboard
-} from "lucide-react";
+    Home, History, ListVideo, UserRound,Clapperboard, MessageCircle,LayoutDashboard
+   } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const items = [
