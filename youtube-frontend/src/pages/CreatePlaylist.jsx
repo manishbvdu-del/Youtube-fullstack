@@ -1,168 +1,153 @@
 
-import { useEffect, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Play } from "lucide-react";
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, ListVideo } from "lucide-react";
 import api from "../api/axios";
 
-function PlaylistDetails() {
-    const { playlistId } = useParams();
+const CreatePlaylist = () => {
     const navigate = useNavigate();
 
-    const [playlist, setPlaylist] = useState(null);
-    const [loading, setLoading] = useState(true);
+    // Store the input values
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+
+    // Store loading and error states
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    useEffect(() => {
-        let cancelled = false;
+    // Handle form submission
+   
+const handleCreatePlaylist = async (e) => {
+    e.preventDefault();
 
-        const fetchPlaylist = async () => {
-            try {
-                setLoading(true);
-                setError("");
+    console.log("1. Form submitted");
+    console.log("2. Name:", name);
+    console.log("3. Description:", description);
 
-                const response = await api.get(
-                    `/playlists/${playlistId}`
-                );
-
-                if (cancelled) return;
-
-                setPlaylist(response.data?.data);
-            } catch (err) {
-                console.error(
-                    "Failed to fetch playlist:",
-                    err.response?.data || err.message
-                );
-
-                if (!cancelled) {
-                    setError(
-                        err.response?.data?.message ||
-                        "Unable to load playlist."
-                    );
-                }
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
-            }
-        };
-
-        if (playlistId) {
-            fetchPlaylist();
-        }
-
-        return () => {
-            cancelled = true;
-        };
-    }, [playlistId]);
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
-                Loading playlist...
-            </div>
-        );
+    if (!name.trim() || !description.trim()) {
+        setError("Please enter both playlist name and description.");
+        console.log("Validation failed");
+        return;
     }
 
-    if (error || !playlist) {
-        return (
-            <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
-                <p className="text-red-400">
-                    {error || "Playlist not found."}
-                </p>
+    try {
+        setLoading(true);
+        setError("");
 
-                <Link to="/playlists" className="mt-4 inline-block">
-                    Back to playlists
-                </Link>
-            </div>
-        );
+        console.log("4. Sending POST /playlists");
+
+        const response = await api.post("/playlists", {
+            name: name.trim(),
+            description: description.trim(),
+        });
+
+        console.log("5. API SUCCESS:", response.status);
+        console.log("6. Response data:", response.data);
+
+        alert("Playlist created successfully!");
+
+        navigate("/playlists", { replace: true });
+    } catch (err) {
+        console.error("PLAYLIST ERROR:", err);
+        console.error("Error status:", err.response?.status);
+        console.error("Error response:", err.response?.data);
+        console.error("Request URL:", err.config?.url);
+
+        const message =
+            err.response?.data?.message ||
+            err.message ||
+            "Unable to create playlist.";
+
+        setError(message);
+    } finally {
+        setLoading(false);
     }
+};
 
-    const videos = playlist.videos || [];
 
     return (
-        <div className="min-h-screen bg-[#0f0f0f] text-white p-4 sm:p-8">
-            <button
-                onClick={() => navigate("/playlists")}
-                className="mb-6 flex items-center gap-2 text-gray-300 hover:text-white"
+        <div className="min-h-screen bg-[#0f0f0f] text-white px-4 py-6 sm:px-8">
+
+            {/* Back navigation */}
+            <Link
+                to="/playlists"
+                className="inline-flex items-center gap-2 text-gray-300 hover:text-white"
             >
                 <ArrowLeft size={20} />
                 Back to playlists
-            </button>
+            </Link>
 
-            <h1 className="text-3xl font-bold">
-                {playlist.name || "Untitled playlist"}
-            </h1>
+            {/* Form container */}
+            <div className="mx-auto mt-10 max-w-xl rounded-xl bg-[#181818] p-6 sm:p-8">
 
-            <p className="mt-2 text-gray-400">
-                {playlist.description || "No description"}
-            </p>
+                <div className="mb-6 flex items-center gap-3">
+                    <ListVideo size={30} />
 
-            <p className="mt-3 text-sm text-gray-400">
-                {videos.length} videos
-            </p>
-
-            {videos.length === 0 ? (
-                <p className="mt-10 text-gray-400">
-                    No videos in this playlist yet.
-                </p>
-            ) : (
-                <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {videos.map((video) => (
-                        <button
-                            key={video._id}
-                            type="button"
-                            onClick={() =>
-                                navigate(`/watch/${video._id}`)
-                            }
-                            className="overflow-hidden rounded-xl bg-[#181818] text-left transition hover:bg-[#272727]"
-                        >
-                            <div className="relative aspect-video bg-[#303030]">
-                                {video.thumbnail ? (
-                                    <img
-                                        src={
-                                            typeof video.thumbnail === "object"
-                                                ? video.thumbnail.url
-                                                : video.thumbnail
-                                        }
-                                        alt={video.title || "Video thumbnail"}
-                                        className="h-full w-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="flex h-full items-center justify-center">
-                                        <Play size={36} />
-                                    </div>
-                                )}
-
-                                {video.duration > 0 && (
-                                    <span className="absolute bottom-2 right-2 rounded bg-black/80 px-2 py-1 text-xs">
-                                        {Math.floor(video.duration / 60)}:
-                                        {String(
-                                            Math.floor(video.duration % 60)
-                                        ).padStart(2, "0")}
-                                    </span>
-                                )}
-                            </div>
-
-                            <div className="p-4">
-                                <h2 className="font-semibold">
-                                    {video.title || "Untitled video"}
-                                </h2>
-
-                                <p className="mt-2 text-sm text-gray-400">
-                                    {Number(video.views || 0).toLocaleString()} views
-                                </p>
-
-                                <span className="mt-3 inline-flex items-center gap-2 text-sm text-red-400">
-                                    <Play size={16} />
-                                    Play video
-                                </span>
-                            </div>
-                        </button>
-                    ))}
+                    <h1 className="text-2xl font-bold">
+                        Create Playlist
+                    </h1>
                 </div>
-            )}
+
+                <form onSubmit={handleCreatePlaylist}>
+
+                    {/* Playlist name */}
+                    <label
+                        htmlFor="name"
+                        className="mb-2 block text-sm font-medium"
+                    >
+                        Playlist name
+                    </label>
+
+                    <input
+                        id="name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter playlist name"
+                        maxLength={100}
+                        required
+                        className="mb-5 w-full rounded-lg border border-gray-700 bg-[#0f0f0f] p-3 outline-none focus:border-white"
+                    />
+
+                    {/* Playlist description */}
+                    <label
+                        htmlFor="description"
+                        className="mb-2 block text-sm font-medium"
+                    >
+                        Description
+                    </label>
+
+                    <textarea
+                        id="description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Describe your playlist"
+                        rows={4}
+                        maxLength={500}
+                        required
+                        className="mb-5 w-full resize-y rounded-lg border border-gray-700 bg-[#0f0f0f] p-3 outline-none focus:border-white"
+                    />
+
+                    {/* Display errors from validation or backend */}
+                    {error && (
+                        <p className="mb-4 text-sm text-red-400">
+                            {error}
+                        </p>
+                    )}
+
+                    {/* Submit button */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full rounded-full bg-white px-5 py-3 font-semibold text-black hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {loading ? "Creating..." : "Create Playlist"}
+                    </button>
+
+                </form>
+            </div>
         </div>
     );
-}
+};
 
-export default PlaylistDetails;
+export default CreatePlaylist;

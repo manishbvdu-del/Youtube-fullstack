@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 
 import Home from "../pages/Home";
+import Tweets from "../pages/Tweets";
 import WatchVideo from "../pages/WatchVideo";
 import PlaylistDetails from "../pages/PlaylistDetails";
 import Dashboard from "../pages/Dashboard";
@@ -110,6 +111,14 @@ const AppRoutes = () => {
                         <Subscription />
                     </ProtectedRoute>
                 }
+            />
+            <Route 
+            path="/tweets"
+             element={
+                <ProtectedRoute>
+                <Tweets />
+                </ProtectedRoute>
+            }
             />
 
             {/* Not Found */}

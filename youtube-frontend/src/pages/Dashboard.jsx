@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import useAuth from "../hooks/useAuth";
@@ -20,34 +19,45 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const fetchDashboard = async () => {
+    const fetchDashboard = useCallback(async () => {
         try {
             setLoading(true);
             setError("");
 
-            const userResponse = await api.get("/users/current-user");
-            const currentUser = userResponse.data.data;
+            const channelId = user?._id || user?.id;
+
+            if (!channelId) {
+                throw new Error("User ID not found. Please log in again.");
+            }
 
             const [statsResponse, videosResponse] = await Promise.all([
-                api.get(`/dashboard/stats/${currentUser._id}`),
-                api.get(`/dashboard/videos/${currentUser._id}`)
+                api.get(`/dashboard/stats/${channelId}`),
+                api.get(`/dashboard/videos/${channelId}`)
             ]);
 
             setStats(statsResponse.data.data);
-            setVideos(videosResponse.data.data || []);
+
+            setVideos(
+                Array.isArray(videosResponse.data.data)
+                    ? videosResponse.data.data
+                    : []
+            );
         } catch (err) {
             setError(
                 err.response?.data?.message ||
+                err.message ||
                 "Unable to load dashboard data."
             );
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
 
     useEffect(() => {
-        fetchDashboard();
-    }, []);
+        if (user) {
+            fetchDashboard();
+        }
+    }, [user, fetchDashboard]);
 
     const statCards = [
         {
@@ -109,7 +119,12 @@ const Dashboard = () => {
                     </h1>
 
                     <p className="text-gray-400 mt-2">
-                        Welcome back, {user?.fullname || user?.username || "Creator"}
+                        Welcome back, {
+                            user?.fullName ||
+                            user?.fullname ||
+                            user?.username ||
+                            "Creator"
+                        }
                     </p>
                 </div>
 
@@ -188,7 +203,7 @@ const Dashboard = () => {
                                     video.thumbnail ||
                                     "https://placehold.co/640x360?text=Video"
                                 }
-                                alt={video.title}
+                                alt={video.title || "Video thumbnail"}
                                 className="w-full aspect-video object-cover"
                             />
 
@@ -208,7 +223,7 @@ const Dashboard = () => {
                                 </p>
 
                                 <button
-                                    onClick={() => navigate(`/video/${video._id}`)}
+                                    onClick={() => navigate(`/watch/${video._id}`)}
                                     className="mt-4 bg-[#303030] hover:bg-[#414141] px-4 py-2 rounded-full text-sm"
                                 >
                                     View Video
