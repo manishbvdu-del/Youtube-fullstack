@@ -19,39 +19,60 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const fetchDashboard = useCallback(async () => {
-        try {
-            setLoading(true);
-            setError("");
+   
+const fetchDashboard = useCallback(async () => {
+    // useCallback: Function ko unnecessary re-creation se bachata hai.
+    // async: Function ke andar await use kar sakte hain.
 
-            const channelId = user?._id || user?.id;
+    try {
+        // API request start hone se pehle loading ON karo.
+        setLoading(true);
 
-            if (!channelId) {
-                throw new Error("User ID not found. Please log in again.");
-            }
+        // Purana error message clear karo.
+        setError("");
 
-            const [statsResponse, videosResponse] = await Promise.all([
-                api.get(`/dashboard/stats/${channelId}`),
-                api.get(`/dashboard/videos/${channelId}`)
-            ]);
+        // Logged-in user ki ID nikalo.
+        // Pehle _id check hoga, nahi mila to id check hogi.
+        const channelId = user?._id || user?.id;
 
-            setStats(statsResponse.data.data);
-
-            setVideos(
-                Array.isArray(videosResponse.data.data)
-                    ? videosResponse.data.data
-                    : []
-            );
-        } catch (err) {
-            setError(
-                err.response?.data?.message ||
-                err.message ||
-                "Unable to load dashboard data."
-            );
-        } finally {
-            setLoading(false);
+        // Agar user ki ID nahi mili, to error throw karo.
+        if (!channelId) {
+            throw new Error("User ID not found. Please log in again.");
         }
-    }, [user]);
+
+        // Dono API requests ko parallel mein execute karo.
+        const [statsResponse, videosResponse] = await Promise.all([
+            api.get(`/dashboard/stats/${channelId}`),
+            api.get(`/dashboard/videos/${channelId}`)
+        ]);
+
+        // Stats API se aaya data stats state mein save karo.
+        setStats(statsResponse.data.data);
+
+        // Check karo ki videos ka data array hai ya nahi.
+        // Array hai to save karo, otherwise empty array save karo.
+        setVideos(
+            Array.isArray(videosResponse.data.data)
+                ? videosResponse.data.data
+                : []
+        );
+
+    } catch (err) {
+        // API ya kisi aur error ko handle karo.
+        // Pehle backend ka error message try karo,
+        // phir JavaScript error message,
+        // warna default error message show karo.
+        setError(
+            err.response?.data?.message ||
+            err.message ||
+            "Unable to load dashboard data."
+        );
+
+    } finally {
+        // Success ho ya error, loading OFF kar do.
+        setLoading(false);
+    }
+}, [user]); // user change hone par function dobara create ho sakta hai.
 
     useEffect(() => {
         if (user) {
