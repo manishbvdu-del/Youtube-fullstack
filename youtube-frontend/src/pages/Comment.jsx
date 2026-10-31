@@ -1,13 +1,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-    MessageCircle,
-    Pencil,
-    Trash2,
-    X,
-    Send,
-    ThumbsUp
-} from "lucide-react";
+    MessageCircle, Pencil, Trash2,X,Send,ThumbsUp} from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../api/axios";
 
@@ -132,49 +126,117 @@ function Comments({ videoId, user, currentUserId }) {
     }, [comments, user]);
 
     // Add a comment
-    const handleAddComment = async (event) => {
-        event.preventDefault();
+   // Function to handle adding a new comment
+const handleAddComment = async (event) => {
 
-        const content = commentText.trim();
+    // Prevent the default form submission behavior.
+    // Normally, submitting a form reloads the browser page.
+    // We don't want the page to reload.
+    event.preventDefault();
 
-        if (!content) {
-            toast.error("Please enter a comment.");
-            return;
-        }
 
-        if (!user) {
-            toast.error("Please log in to comment.");
-            return;
-        }
+    // Remove unnecessary spaces from the beginning and end
+    // of the comment entered by the user.
+    //
+    // Example:
+    // commentText = "   Nice video!   "
+    // content = "Nice video!"
+    const content = commentText.trim();
 
-        try {
-            setSubmitting(true);
 
-            await api.post(`/comments/${videoId}`, {
-                content
-            });
+    // Check whether the user entered an empty comment.
+    // If content is empty, show an error message and stop execution.
+    if (!content) {
+        toast.error("Please enter a comment.");
+        return;
+    }
 
-            setCommentText("");
 
-            // Refetch so the backend can return populated owner details
-            await fetchComments();
+    // Check whether the user is logged in.
+    // If user is null or undefined, the user is not logged in.
+    // Only logged-in users can add comments.
+    if (!user) {
+        toast.error("Please log in to comment.");
+        return;
+    }
 
-            toast.success("Comment added.");
-        } catch (err) {
-            console.error(
-                "Failed to add comment:",
-                err.response?.data || err.message
-            );
 
-            toast.error(
-                err.response?.data?.message ||
-                    "Unable to add comment."
-            );
-        } finally {
-            setSubmitting(false);
-        }
-    };
+    // Start the try block.
+    // We use try-catch because the API request can fail.
+    try {
 
+        // Set submitting to true.
+        // This tells React that the comment submission is in progress.
+        // We can use this state to disable the submit button.
+        setSubmitting(true);
+
+
+        // Send a POST request to the backend.
+        //
+        // URL: /comments/${videoId}
+        // Body: { content: "Nice video!" }
+        //
+        // The backend receives the comment content
+        // and the video ID to which the comment belongs.
+        await api.post(`/comments/${videoId}`, {
+            content
+        });
+
+
+        // After the backend successfully creates the comment,
+        // clear the input field.
+        //
+        // React updates commentText to an empty string.
+        // If textarea value is connected to commentText,
+        // the textarea becomes empty automatically.
+        setCommentText("");
+
+
+        // Fetch comments again from the backend.
+        //
+        // Why?
+        // The newly created comment may need populated owner details,
+        // such as username, avatar and other user information.
+        //
+        // fetchComments() gets the latest comments from the database
+        // and updates the comments state.
+        await fetchComments();
+
+
+        // Show a success message after the comment is added
+        // and comments are fetched successfully.
+        toast.success("Comment added.");
+
+
+    } catch (err) {
+
+        // If the API request or fetchComments() fails,
+        // execution comes here.
+        //
+        // Print the actual error in the browser console.
+        console.error(
+            "Failed to add comment:",
+            err.response?.data || err.message
+        );
+
+
+        // Show the backend error message if available.
+        // Otherwise, show the default error message.
+        toast.error(
+            err.response?.data?.message ||
+                "Unable to add comment."
+        );
+
+
+    } finally {
+
+        // This block always executes whether the try succeeds or fails.
+        //
+        // Set submitting back to false.
+        // This allows the user to submit another comment.
+        setSubmitting(false);
+    }
+};
     // Save edited comment
     const handleSaveEdit = async (commentId) => {
         const content = editText.trim();
@@ -269,73 +331,101 @@ function Comments({ videoId, user, currentUserId }) {
         }
     };
 
-    // Like or unlike a comment
-    const handleToggleCommentLike = async (commentId) => {
-        if (!user) {
-            toast.error("Please log in to like comments.");
-            return;
-        }
+ // Like or unlike a comment
+ const handleToggleCommentLike = async (commentId) => {
 
-        if (commentLikingId) return;
+     // STEP 1: Check whether the user is logged in
+     // If user is not logged in, do not allow liking
+     if (!user) {
+         toast.error("Please log in to like comments.");
+         return;
+     }
 
-        const previousLike = commentLikes[commentId] || {
-            count: 0,
-            liked: false
-        };
+     // STEP 2: Prevent multiple like requests at the same time
+     // If one comment like request is already running, stop this request
+     if (commentLikingId) return;
 
-        try {
-            setCommentLikingId(commentId);
+     // STEP 3: Store the previous like state of this comment
+     // If no state exists yet, use count = 0 and liked = false
+     const previousLike = commentLikes[commentId] || {
+         count: 0,
+         liked: false
+     };
 
-            const response = await api.post(
-                `/likes/toggle/c/${commentId}`
-            );
+     try {
+         // STEP 4: Remember which comment is currently being liked
+         // Useful for disabling its button while the API request runs
+         setCommentLikingId(commentId);
 
-            const data = response.data?.data || {};
+         // STEP 5: Send a request to the backend
+         // Backend decides whether to add or remove the like
+         const response = await api.post(
+             `/likes/toggle/c/${commentId}`
+         );
 
-            const liked =
-                typeof data.liked === "boolean"
-                    ? data.liked
-                    : typeof data.isLiked === "boolean"
-                        ? data.isLiked
-                        : !previousLike.liked;
+         // STEP 6: Read the response data safely
+         // Expected response may contain liked status and like count
+         const data = response.data?.data || {};
 
-            const serverCount =
-                data.likeCount ??
-                data.likesCount ??
-                data.totalLikes;
+         // STEP 7: Determine the new like status
+         // Prefer the server's liked value, then isLiked
+         // If neither exists, assume the status has toggled
+         const liked =
+             typeof data.liked === "boolean"
+                 ? data.liked
+                 : typeof data.isLiked === "boolean"
+                     ? data.isLiked
+                     : !previousLike.liked;
 
-            setCommentLikes((prev) => ({
-                ...prev,
-                [commentId]: {
-                    liked,
-                    count:
-                        serverCount !== undefined
-                            ? Number(serverCount)
-                            : Math.max(
-                                0,
-                                previousLike.count +
-                                    (liked === previousLike.liked
-                                        ? 0
-                                        : liked
-                                            ? 1
-                                            : -1)
-                            )
-                }
-            }));
-        } catch (err) {
-            console.error(
-                "Failed to toggle comment like:",
-                err.response?.data || err.message
-            );
+         // STEP 8: Get the updated like count from the server
+         // Different backends may use different property names
+         const serverCount =
+             data.likeCount ??
+             data.likesCount ??
+             data.totalLikes;
 
-            toast.error(
-                err.response?.data?.message ||
-                    "Unable to like this comment."
-            );
-        } finally {
-            setCommentLikingId(null);
-        }
-    };
+         // STEP 9: Update the React state for this comment
+         // Keep the like states of all other comments unchanged
+         setCommentLikes((prev) => ({
+             ...prev,
+             [commentId]: {
+                 liked,
+
+                 // Use the server count when available
+                 // Otherwise calculate the new count locally
+                 count:
+                     serverCount !== undefined
+                         ? Number(serverCount)
+                         : Math.max(
+                             0,
+                             previousLike.count +
+                                 (liked === previousLike.liked
+                                     ? 0
+                                     : liked
+                                         ? 1
+                                         : -1)
+                         )
+             }
+         }));
+
+     } catch (err) {
+         // STEP 10: Log the error for debugging
+         console.error(
+             "Failed to toggle comment like:",
+             err.response?.data || err.message
+         );
+
+         // Show an understandable error message to the user
+         toast.error(
+             err.response?.data?.message ||
+                 "Unable to like this comment."
+         );
+
+     } finally {
+         // STEP 11: Clear the loading state whether request succeeds or fails
+         setCommentLikingId(null);
+     }
+ };
 
     return (
         <section className="mt-6 rounded-xl bg-[#181818] p-4 text-white">
@@ -415,9 +505,7 @@ function Comments({ videoId, user, currentUserId }) {
                         const isOwner =
                             loggedInUserId &&
                             ownerId &&
-                            String(loggedInUserId) ===
-                                String(ownerId);
-
+                            String(loggedInUserId) === String(ownerId);
                         const likes =
                             commentLikes[comment._id] || {
                                 count: 0,

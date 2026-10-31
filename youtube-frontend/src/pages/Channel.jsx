@@ -13,36 +13,6 @@ const Channel = () => {
   const [subscribing, setSubscribing] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchChannel = async () => {
-    const response = await api.get(
-      `/users/c/${encodeURIComponent(username)}`
-    );
-
-    const channelData = response.data.data;
-
-    setChannel(channelData);
-    setIsSubscribed(channelData.isSubscribed ?? false);
-
-    return channelData;
-  };
-
-  const fetchVideos = async (channelId) => {
-    const response = await api.get("/videos", {
-      params: {
-        userId: channelId,
-        limit: 20
-      }
-    });
-
-    const result = response.data.data;
-
-    setVideos(
-      Array.isArray(result)
-        ? result
-        : result?.videos ?? []
-    );
-  };
-
   const handleSubscribe = async () => {
     if (!channel || subscribing) return;
 
